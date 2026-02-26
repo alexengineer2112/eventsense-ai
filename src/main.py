@@ -1,40 +1,61 @@
+import spacy
+nlp = spacy.load("en_core_web_sm")
 import re
+from datetime import datetime
+
 
 def classify_email(text):
     text = text.lower()
-    if "internship" in text or "placement" in text:
-        return "Placement / Internship"
-    elif "workshop" in text or "training" in text:
-        return "Workshop"
+
+    if "campus recruitment" in text:
+        return "Campus Recruitment Opportunity"
+    elif "full-time" in text or "full time" in text:
+        return "Full-Time Opportunity"
+    elif "internship" in text:
+        return "Internship"
+    elif "placement drive" in text:
+        return "Placement Drive"
+    elif "recruitment" in text:
+        return "Recruitment Opportunity"
     else:
         return "General"
 
+
+
 def extract_deadline(text):
-    # Matches: 15th January 2026 OR 15 January 2026
-    pattern = r'(\d{1,2}(?:st|nd|rd|th)?\s+\w+\s+\d{4})'
-    match = re.search(pattern, text)
-    return match.group(1) if match else "Not Found"
+    doc = nlp(text)
+
+    for ent in doc.ents:
+        if ent.label_ == "DATE":
+            return ent.text
+
+    return "Not Found"
+
 
 def extract_company(text):
-    match = re.search(r'Internship opportunity with (.+?) \(', text)
-    return match.group(1) if match else "Not Found"
+    doc = nlp(text)
 
-def process_email(file_path):
-    with open(file_path, 'r', encoding="utf-8") as file:
-        text = file.read()
+    for ent in doc.ents:
+        if ent.label_ == "ORG":
+            return ent.text
 
-    category = classify_email(text)
-    deadline = extract_deadline(text)
-    company = extract_company(text)
+    return "Not Found"
 
-    print("📧 Email Processed Successfully")
-    print("Category       :", category)
-    print("Company        :", company)
-    print("Deadline       :", deadline)
-    print("Action         : Task & Reminder Created")
-    print("-" * 50)
 
-if __name__ == "__main__":
-    process_email("data/placement_email.txt")
-    process_email("data/workshop_email.txt")
+def extract_job_role(text):
+    match = re.search(r'role\s+(?:of|:)?\s*([A-Za-z\s]+)', text, re.IGNORECASE)
+    return match.group(1).strip() if match else "Not Found"
 
+
+def extract_links(text):
+    links = re.findall(r'https?://[^\s]+', text)
+
+    classified_links = []
+
+    for link in links:
+        if "forms.gle" in link or "google.com/forms" in link:
+            classified_links.append(("Google Form", link))
+        else:
+            classified_links.append(("Official/Other Link", link))
+
+    return classified_links

@@ -16,11 +16,41 @@ function extractDeadline(text) {
     /deadline[:\s]+\d{1,2}(?:st|nd|rd|th)?\s+\w+/i,
   ];
 
-  // Try each pattern and return the first match
+  // Time patterns to match various time formats
+  const timePatterns = [
+    // Format: "12:00 PM" or "12:00PM" or "12:00 p.m." or "12:00p.m."
+    /\d{1,2}:\d{2}\s*(?:AM|PM|a\.m\.|p\.m\.|am|pm)/i,
+    // Format: "12 PM" or "12PM" or "12 p.m." or "12p.m."
+    /\d{1,2}\s*(?:AM|PM|a\.m\.|p\.m\.|am|pm)/i,
+    // Format: "12:00:00" (24-hour format with seconds)
+    /\d{1,2}:\d{2}:\d{2}/,
+    // Format: "12:00" (24-hour format)
+    /\d{1,2}:\d{2}(?!\d)/,
+  ];
+
+  // Try each date pattern and return the first match with time if available
   for (let pattern of datePatterns) {
     const match = text.match(pattern);
     if (match) {
-      return match[0].trim();
+      let dateStr = match[0].trim();
+      const dateIndex = match.index;
+
+      // Look for time pattern near the date (within 50 characters after the date)
+      const textAfterDate = text.substring(
+        dateIndex + match[0].length,
+        dateIndex + match[0].length + 50
+      );
+
+      for (let timePattern of timePatterns) {
+        const timeMatch = textAfterDate.match(timePattern);
+        if (timeMatch) {
+          // Format: "Date, Time"
+          return `${dateStr}, ${timeMatch[0].trim()}`;
+        }
+      }
+
+      // If no time found, return just the date
+      return dateStr;
     }
   }
 
@@ -31,13 +61,15 @@ function extractDeadline(text) {
 function categorizeEmail(text) {
   const lowerText = text.toLowerCase();
 
-  if (
-    lowerText.includes("placement") ||
-    lowerText.includes("recruitment") ||
-    lowerText.includes("internship") ||
-    lowerText.includes("job")
-  ) {
+  // Check for specific categories in order of priority
+  if (lowerText.includes("placement")) {
     return "Placement";
+  } else if (lowerText.includes("internship")) {
+    return "Internship";
+  } else if (lowerText.includes("recruitment")) {
+    return "Recruitment";
+  } else if (lowerText.includes("job")) {
+    return "Job";
   } else if (
     lowerText.includes("workshop") ||
     lowerText.includes("training") ||
