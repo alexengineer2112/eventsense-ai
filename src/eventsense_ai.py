@@ -1,36 +1,88 @@
-from gmail_reader import fetch_placement_emails
+import json
+from gmail_reader import fetch_emails
 from gemini_extractor import extract_multiple_emails
+from deadline_utils import analyze_deadline
+from notification_utils import send_notification
+
+
+PROCESSED_FILE = "data/processed.json"
+
+
+def load_processed():
+
+    try:
+        with open(PROCESSED_FILE, "r") as f:
+            return json.load(f)
+
+    except:
+        return []
+
+
+def save_processed(ids):
+
+    with open(PROCESSED_FILE, "w") as f:
+        json.dump(ids, f)
 
 
 def main():
 
     print("\n🔎 Fetching latest placement emails...\n")
 
-    emails = fetch_placement_emails()
+    processed_ids = load_processed()
 
-    if not emails:
+    emails = fetch_emails()
 
-        print("No placement emails found.")
+    email_contents = []
+    new_ids = []
+
+    for email in emails:
+
+        email_id = email["id"]
+
+        if email_id not in processed_ids:
+
+            email_contents.append(email["content"])
+            new_ids.append(email_id)
+
+    print("Total emails fetched:", len(emails))
+    print("New emails detected:", len(email_contents))
+
+    if not email_contents:
+
+        print("✅ No new placement emails\n")
         return
 
-    results = extract_multiple_emails(emails)
+    print("Sending emails to Gemini...\n")
+
+    results = extract_multiple_emails(email_contents)
 
     if not results:
-        print("AI extraction failed.")
+        print("⚠️ No results returned from AI")
         return
 
-    for i, result in enumerate(results, start=1):
+    for job in results:
 
-        print(f"\n📧 Email {i}")
+        deadline_info = analyze_deadline(job["deadline"])
 
-        print("Category :", result.get("category"))
-        print("Company  :", result.get("company"))
-        print("Job Role :", result.get("job_role"))
-        print("Deadline :", result.get("deadline"))
-        
+        job["deadline_date"] = deadline_info["deadline_date"]
+        job["days_left"] = deadline_info["days_left"]
+        job["urgency"] = deadline_info["urgency"]
 
-        print("-" * 50)
+        print("\n📌 Opportunity Found")
+        print("Company:", job["company"])
+        print("Role:", job["job_role"])
+        print("Deadline:", job["deadline_date"])
+        print("Urgency:", job["urgency"])
 
+        # send desktop notification
+        send_notification(
+            job["company"],
+            job["deadline_date"],
+            job["urgency"]
+        )
 
-if __name__ == "__main__":
-    main()
+    processed_ids.extend(new_ids)
+
+    save_processed(processed_ids)
+
+    print("\n✅ Emails processed successfully\n")

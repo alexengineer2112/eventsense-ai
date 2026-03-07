@@ -1,9 +1,17 @@
-from google import genai
+import os
 import json
+import re
+from dotenv import load_dotenv
+from google import genai
 
-API_KEY = "AIzaSyA4w3ZFvQ0y7vKXfVFPjvr5gPidqdcPwnQ"
+# Load environment variables
+load_dotenv()
 
-client = genai.Client(api_key=API_KEY)
+# Get API key from .env
+api_key = os.getenv("GEMINI_API_KEY")
+
+# Initialize Gemini client
+client = genai.Client(api_key=api_key)
 
 
 def extract_multiple_emails(emails):
@@ -14,13 +22,34 @@ def extract_multiple_emails(emails):
         combined_text += f"\n\nEMAIL {i}:\n{email}\n"
 
     prompt = f"""
-You are an AI system that extracts placement information from university emails.
+You are an AI assistant that extracts placement opportunity information from university emails.
 
-Extract information from EACH email.
+Analyze EACH email carefully.
 
-Return ONLY JSON list.
+Return ONLY valid JSON.
 
-Format:
+Do NOT include explanations.
+Do NOT include markdown.
+Do NOT include extra text.
+
+Required fields:
+
+category
+company
+job_role
+deadline
+application_links
+
+Category must be one of:
+- Internship
+- Full-Time Opportunity
+- Campus Recruitment
+- Workshop
+- General
+
+If information is missing return "Not Found".
+
+Return format:
 
 [
  {{
@@ -28,25 +57,32 @@ Format:
   "company": "",
   "job_role": "",
   "deadline": "",
-    }}
+  "application_links": []
+ }}
 ]
 
 Emails:
 {combined_text}
 """
 
-    response = client.models.generate_content(
-        model="models/gemini-2.5-flash",
-        contents=prompt
-    )
-
-    text_output = response.text.strip()
-
     try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+
+        text_output = response.text.strip()
+
+        # Remove markdown if Gemini adds it
+        text_output = re.sub(r"```json|```", "", text_output).strip()
+
         data = json.loads(text_output)
+
         return data
 
-    except:
-        print("⚠️ JSON parsing failed")
-        print(text_output)
+    except Exception as e:
+
+        print("⚠️ Error while processing emails with Gemini")
+        print(e)
+
         return None
