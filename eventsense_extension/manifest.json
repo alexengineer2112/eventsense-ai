@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "EventSense AI",
+  "version": "1.0",
+  "description": "AI Gmail assistant for placement tracking",
+
+  "permissions": [
+    "storage"
+  ],
+
+  "host_permissions": [
+    "https://mail.google.com/*"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": ["https://mail.google.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

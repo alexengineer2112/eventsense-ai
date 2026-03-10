@@ -24,7 +24,7 @@ def gmail_authenticate():
 
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                "credentials.json", SCOPES
+                "credentials/credentials.json", SCOPES
             )
             creds = flow.run_local_server(port=0)
 
@@ -58,7 +58,7 @@ def get_email_body(payload):
     return ""
 
 
-def fetch_emails():
+def fetch_placement_emails():
 
     service = gmail_authenticate()
 

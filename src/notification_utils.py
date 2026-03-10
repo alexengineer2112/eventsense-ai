@@ -1,17 +1,14 @@
 from plyer import notification
 
-def send_notification(company, deadline, urgency):
 
-    title = "📢 Placement Opportunity"
+def send_notification(title, message):
 
-    message = f"""
-Company: {company}
-Deadline: {deadline}
-Urgency: {urgency}
-"""
+    try:
+        notification.notify(
+            title=title,
+            message=message,
+            timeout=10
+        )
 
-    notification.notify(
-        title=title,
-        message=message,
-        timeout=10
-    )
+    except Exception as e:
+        print("Notification error:", e)

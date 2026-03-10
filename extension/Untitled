@@ -1,7 +1,0 @@
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "getEmailText") {
-    const emailBody = document.querySelector("div[role='main']");
-    const text = emailBody ? emailBody.innerText : "No email found";
-    sendResponse({ emailText: text });
-  }
-});

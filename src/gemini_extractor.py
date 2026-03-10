@@ -22,48 +22,41 @@ def extract_multiple_emails(emails):
         combined_text += f"\n\nEMAIL {i}:\n{email}\n"
 
     prompt = f"""
-You are an AI assistant that extracts placement opportunity information from university emails.
+    You analyze placement office emails from a university.
 
-Analyze EACH email carefully.
+    Two types of emails exist:
 
-Return ONLY valid JSON.
+    1. Placement Opportunity
+    2. General Announcement / Information
 
-Do NOT include explanations.
-Do NOT include markdown.
-Do NOT include extra text.
+    Return a JSON ARRAY where each element corresponds to one email.
 
-Required fields:
+    Opportunity format:
 
-category
-company
-job_role
-deadline
-application_links
+    {{
+    "type": "opportunity",
+    "company": "",
+    "job_role": "",
+    "deadline": "",
+    "application_links": []
+    }}
 
-Category must be one of:
-- Internship
-- Full-Time Opportunity
-- Campus Recruitment
-- Workshop
-- General
+    Announcement format:
 
-If information is missing return "Not Found".
+    {{
+    "type": "announcement",
+    "summary": "brief 1-2 sentence summary"
+    }}
 
-Return format:
+    Rules:
+    - Only include fields that exist
+    - If deadline is missing, omit it
+    - Do NOT return explanations
+    - Return ONLY JSON ARRAY
 
-[
- {{
-  "category": "",
-  "company": "",
-  "job_role": "",
-  "deadline": "",
-  "application_links": []
- }}
-]
-
-Emails:
-{combined_text}
-"""
+    Emails:
+    {combined_text}
+    """
 
     try:
         response = client.models.generate_content(

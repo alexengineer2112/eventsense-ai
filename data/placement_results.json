@@ -1,0 +1,40 @@
+[
+    {
+        "type": "announcement",
+        "summary": "A gentle reminder for students of the passing out batch 2025–2026 to submit their offer letters or valid confirmation documents for official documentation and verification through the provided Google Form link."
+    },
+    {
+        "type": "opportunity",
+        "company": "Byteridge Software Pvt. Ltd.",
+        "job_role": "SDE (Freshers)",
+        "deadline": "6 March 2026, 4:00 PM",
+        "application_links": [],
+        "deadline_status": {
+            "deadline_date": "2026-03-06",
+            "days_left": -4,
+            "urgency": "Expired"
+        }
+    },
+    {
+        "type": "opportunity",
+        "company": "Elythra Edufyi Tech Solutions",
+        "job_role": "Business Development Associate",
+        "deadline": "6 March 2026 (11:00 AM)",
+        "application_links": [],
+        "deadline_status": {
+            "deadline_date": "6 March 2026 (11:00 AM)",
+            "days_left": "Unknown",
+            "urgency": "Unknown"
+        }
+    },
+    {
+        "type": "opportunity",
+        "company": "BCG",
+        "job_role": "Software Engineer Graduate Trainee",
+        "application_links": []
+    },
+    {
+        "type": "announcement",
+        "summary": "This mandatory announcement requires shortlisted/eligible candidates for the Trainee QA Analyst position at IQVIA to complete their registration through the provided link on or before 9:00 AM, 25th February 2026."
+    }
+]

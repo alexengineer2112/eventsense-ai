@@ -1,0 +1,46 @@
+body{
+    font-family: Arial, sans-serif;
+    width:320px;
+    padding:10px;
+    background:#f4f6f8;
+}
+
+.header{
+    font-size:18px;
+    font-weight:bold;
+    margin-bottom:10px;
+}
+
+.job{
+    background:white;
+    border-radius:8px;
+    padding:12px;
+    margin-bottom:10px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.company{
+    font-size:16px;
+    font-weight:bold;
+}
+
+.role{
+    color:#555;
+}
+
+.deadline{
+    margin-top:6px;
+    font-size:13px;
+    color:#d32f2f;
+}
+
+.apply{
+    margin-top:8px;
+    display:inline-block;
+    padding:6px 10px;
+    background:#1976d2;
+    color:white;
+    text-decoration:none;
+    border-radius:4px;
+    font-size:13px;
+}

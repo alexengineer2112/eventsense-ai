@@ -1,88 +1,128 @@
-import json
-from gmail_reader import fetch_emails
+from gmail_reader import fetch_placement_emails
 from gemini_extractor import extract_multiple_emails
 from deadline_utils import analyze_deadline
 from notification_utils import send_notification
 
+import json
+import os
 
+
+DATA_FILE = "data/placement_results.json"
 PROCESSED_FILE = "data/processed.json"
 
 
-def load_processed():
+def load_processed_emails():
 
-    try:
+    if os.path.exists(PROCESSED_FILE):
         with open(PROCESSED_FILE, "r") as f:
             return json.load(f)
 
-    except:
-        return []
+    return []
 
 
-def save_processed(ids):
+def save_processed_emails(ids):
 
     with open(PROCESSED_FILE, "w") as f:
-        json.dump(ids, f)
+        json.dump(ids, f, indent=4)
 
 
 def main():
 
     print("\n🔎 Fetching latest placement emails...\n")
 
-    processed_ids = load_processed()
+    emails = fetch_placement_emails()
 
-    emails = fetch_emails()
+    print(f"Total emails fetched: {len(emails)}")
 
-    email_contents = []
-    new_ids = []
+    processed_ids = load_processed_emails()
+
+    new_emails = []
 
     for email in emails:
 
-        email_id = email["id"]
+        if email["id"] not in processed_ids:
+            new_emails.append(email)
+            processed_ids.append(email["id"])
 
-        if email_id not in processed_ids:
-
-            email_contents.append(email["content"])
-            new_ids.append(email_id)
-
-    print("Total emails fetched:", len(emails))
-    print("New emails detected:", len(email_contents))
-
-    if not email_contents:
-
-        print("✅ No new placement emails\n")
+    if not new_emails:
+        print("No new emails to analyze.")
         return
+
+    print(f"New emails detected: {len(new_emails)}")
+
+    email_contents = [email["content"] for email in new_emails]
 
     print("Sending emails to Gemini...\n")
 
     results = extract_multiple_emails(email_contents)
 
     if not results:
-        print("⚠️ No results returned from AI")
+        print("AI extraction failed.")
         return
+
+    cleaned_results = []
 
     for job in results:
 
-        deadline_info = analyze_deadline(job["deadline"])
+        deadline = job.get("deadline")
 
-        job["deadline_date"] = deadline_info["deadline_date"]
-        job["days_left"] = deadline_info["days_left"]
-        job["urgency"] = deadline_info["urgency"]
+        # Analyze deadline only if it exists
+        if deadline and deadline != "Not Found":
+            job["deadline_status"] = analyze_deadline(deadline)
 
-        print("\n📌 Opportunity Found")
-        print("Company:", job["company"])
-        print("Role:", job["job_role"])
-        print("Deadline:", job["deadline_date"])
-        print("Urgency:", job["urgency"])
+        else:
+            job.pop("deadline", None)
 
-        # send desktop notification
-        send_notification(
-            job["company"],
-            job["deadline_date"],
-            job["urgency"]
-        )
+        cleaned_results.append(job)
 
-    processed_ids.extend(new_ids)
+        # ------------------------
+        # Console Output
+        # ------------------------
 
-    save_processed(processed_ids)
+        print("\n📧 Email")
 
-    print("\n✅ Emails processed successfully\n")
+        if job.get("company"):
+            print("Company :", job.get("company"))
+
+        if job.get("job_role"):
+            print("Role    :", job.get("job_role"))
+
+        if job.get("deadline"):
+            print("Deadline:", job.get("deadline"))
+
+            if job.get("deadline_status"):
+                print("Status  :", job.get("deadline_status"))
+
+        if job.get("summary"):
+            print("Info    :", job.get("summary"))
+
+        print("-" * 50)
+
+        # ------------------------
+        # Desktop Notification
+        # ------------------------
+
+        if job.get("type") == "opportunity" and job.get("company"):
+
+            message = job.get("company")
+
+            if job.get("job_role"):
+                message += f" - {job.get('job_role')}"
+
+            send_notification(
+                title="New Placement Opportunity",
+                message=message
+            )
+
+    os.makedirs("data", exist_ok=True)
+
+    with open(DATA_FILE, "w") as f:
+        json.dump(cleaned_results, f, indent=4, ensure_ascii=False)
+
+    save_processed_emails(processed_ids)
+
+    print("\n✅ Results saved to data/placement_results.json")
+
+
+if __name__ == "__main__":
+    main()
